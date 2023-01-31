@@ -59,17 +59,23 @@ async function run() {
         // payment 
         app.post('/bookingPayment/:id',async(req,res)=>{
             const id = req.params.id
+            if(!id){
+                return res.redirect(`${process.env.CLIENT_URL}/dashborad`)
+            }
 
             const query = {_id:ObjectId(id)}
             const booking = await bookingCollection.findOne(query)
             const {name,email,number,bookingPrice,bookingTourName} = booking
+            if(!name || !email || !number || !bookingPrice || !bookingTourName){
+                return res.redirect(`${process.env.CLIENT_URL}/dashborad`)
+            }
             const transcationId = new ObjectId().toString()
             const data = {
                 total_amount: bookingPrice,
                 currency: 'USD',
                 tran_id: transcationId, // use unique tran_id for each api call
-                success_url: `http://localhost:5000/payment/success?transcationId=${transcationId}`,
-                fail_url: 'http://localhost:3030/fail',
+                success_url: `${process.env.SERVER_URL}/payment/success?transcationId=${transcationId}`,
+                fail_url: `${process.env.SERVER_URL}/payment/fail`,
                 cancel_url: 'http://localhost:3030/cancel',
                 ipn_url: 'http://localhost:3030/ipn',
                 shipping_method: 'Courier',
@@ -112,6 +118,9 @@ async function run() {
 
         app.post('/payment/success',async(req,res)=>{
            const {transcationId}  = req.query
+           if (!transcationId) {
+            return res.redirect(`${process.env.CLIENT_URL}/dashborad`)
+           }
            const query = {transactionId:transcationId}
            const updatedDoc = {
             $set:{
@@ -120,8 +129,11 @@ async function run() {
           }
           const result = await bookingCollection.updateOne(query,updatedDoc)
           if (result.modifiedCount > 0) {
-            res.redirect(`http://localhost:3000/payment/success?transcationId=${transcationId}`)
+            res.redirect(`${process.env.CLIENT_URL}/payment/success?transcationId=${transcationId}`)
           }
+        })
+        app.post('/payment/fail',(req,res)=>{
+            res.redirect(`${process.env.CLIENT_URL}/dashborad`)
         })
 
         app.get('/booking/by-trancation-id/:id',async(req,res)=>{
