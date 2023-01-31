@@ -66,9 +66,7 @@ async function run() {
             const query = {_id:ObjectId(id)}
             const booking = await bookingCollection.findOne(query)
             const {name,email,number,bookingPrice,bookingTourName} = booking
-            if(!name || !email || !number || !bookingPrice || !bookingTourName){
-                return res.redirect(`${process.env.CLIENT_URL}/dashborad`)
-            }
+          
             const transcationId = new ObjectId().toString()
             const data = {
                 total_amount: bookingPrice,
